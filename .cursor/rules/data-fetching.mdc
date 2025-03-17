@@ -1,0 +1,98 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Rules for Data Fetching and Caching in Next.js 15
+globs: app/**/*.{tsx,jsx,ts,js}
+alwaysApply: true
+---
+
+# Data Fetching và Caching trong Next.js 15
+
+## Thay đổi Caching trong Next.js 15
+- Next.js 15 đã thay đổi cách caching mặc định, không còn cache tự động:
+  - `GET` Route Handlers: Không cache mặc định
+  - Client Router Cache: Không cache Page components mặc định
+  - `fetch` requests: Sử dụng `no-store` mặc định
+
+## Server Fetching với fetch
+- Cách tốt nhất để fetch data trong Server Components
+
+```tsx
+// Không cache (mặc định trong Next.js 15)
+async function getData() {
+  const res = await fetch("https://api.example.com/data");
+  if (!res.ok) throw new Error("Failed to fetch data");
+  return res.json();
+}
+
+// Kích hoạt caching rõ ràng
+async function getCachedData() {
+  const res = await fetch("https://api.example.com/data", {
+    cache: "force-cache", // Yêu cầu cache
+  });
+  if (!res.ok) throw new Error("Failed to fetch data");
+  return res.json();
+}
+
+// Revalidation sau một khoảng thời gian
+async function getRevalidatedData() {
+  const res = await fetch("https://api.example.com/data", {
+    next: { revalidate: 3600 }, // Revalidate sau 1 giờ
+  });
+  if (!res.ok) throw new Error("Failed to fetch data");
+  return res.json();
+}
+```
+
+## Route segment config
+- Sử dụng `dynamic` export để kiểm soát rendering và caching ở cấp route
+
+```tsx
+// Static rendering (default)
+export const dynamic = "force-static";
+
+// Dynamic rendering
+export const dynamic = "force-dynamic";
+
+// Opt out of dynamic rendering
+export const dynamic = "error";
+```
+
+## Route Handlers
+- Không cache mặc định trong Next.js 15
+- Phải kích hoạt caching rõ ràng khi cần
+
+```tsx
+// app/api/users/route.ts
+export async function GET() {
+  // Không cache mặc định trong Next.js 15
+  const users = await fetchUsers();
+  return Response.json(users);
+}
+
+// Kích hoạt caching với route config
+export const dynamic = "force-static";
+export async function GET() {
+  const users = await fetchUsers();
+  return Response.json(users);
+}
+```
+
+## Server Actions
+- Sử dụng cho form submissions và mutations
+- Không cache mặc định
+
+```tsx
+// app/actions.ts
+"use server";
+
+export async function submitForm(formData: FormData) {
+  const name = formData.get("name");
+  // Process form data
+  return { success: true };
+}
+```
+

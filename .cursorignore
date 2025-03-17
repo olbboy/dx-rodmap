@@ -1,0 +1,16 @@
+# Env files with sensitive information
+.env
+.env.*
+*.pem
+**/credentials/*.json
+
+# Large binary or generated files
+**/node_modules
+**/dist
+**/build
+**/.next
+**/__pycache__
+
+# Personal notes and configuration
+**/personal-notes.md
+**/.vscode/settings.json

@@ -1,0 +1,60 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Rules for Server and Client Components in Next.js 15
+globs: app/**/*.{tsx,jsx,ts,js}
+alwaysApply: true
+---
+
+# Server và Client Component Guidelines
+
+## Server Components (Mặc định)
+- Sử dụng Server Components khi:
+  - Fetch dữ liệu
+  - Truy cập backend resources trực tiếp
+  - Giữ thông tin nhạy cảm trên server (access tokens, API keys)
+  - Giảm JavaScript phía client
+
+## Client Components
+- Thêm "use client" ở đầu file khi:
+  - Cần tương tác người dùng (onClick, onChange)
+  - Sử dụng React hooks (useState, useEffect)
+  - Sử dụng browser-only APIs
+  - Sử dụng custom hooks phụ thuộc vào state hoặc effects
+
+## Best Practices
+- Giữ các Client Components càng nhỏ càng tốt
+- Di chuyển logic tương tác xuống sâu nhất trong cây component
+- Sử dụng pattern "nâng cao client components" để tối ưu
+
+Ví dụ tốt:
+
+```tsx
+// Server Component
+import ClientButton from "./ClientButton";
+
+export default function ServerComponent() {
+  // Fetch data từ database (chạy trên server)
+  const data = await fetchData();
+
+  return (
+    <div>
+      <h1>{data.title}</h1>
+      <ClientButton />
+    </div>
+  );
+}
+
+// ClientButton.jsx - thêm "use client" tại file con
+("use client");
+import { useState } from "react";
+
+export default function ClientButton() {
+  const [count, setCount] = useState(0);
+
+  return <button onClick={() => setCount(count + 1)}>Clicks: {count}</button>;
+}
+```

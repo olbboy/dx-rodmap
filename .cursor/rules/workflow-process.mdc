@@ -1,0 +1,37 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Workflow Process Standards
+globs: **/*.*
+alwaysApply: true
+---
+
+# Quy Trình Làm Việc Bắt Buộc
+
+Khi nhận bất kỳ yêu cầu nào, bạn PHẢI làm theo trình tự sau:
+
+## 1. Đọc và Hiểu Tài Liệu Technical Document
+- Ưu tiên đọc file [plan.md](mdc:docs/plan.md) trước khi thực hiện bất kỳ hành động nào
+- Phân tích yêu cầu từ [plan.md](mdc:docs/plan.md) và kiểm tra tính khả thi
+- Nếu không tìm thấy file [plan.md](mdc:docs/plan.md), hãy yêu cầu người dùng cung cấp
+
+## 2. Cập Nhật Giải Pháp và Tài Liệu
+- Trước khi viết code, đề xuất tạo tài liệu có tên {solution-system-sprint-<sprint_number>}.md, {solution-design-<sprint_number>}.md trong folder implements
+- Tự động tạo file {solution-system-sprint-<sprint_number>}.md, {solution-design-<sprint_number>}.md trong folder implement để ghi lại các thay đổi nếu chưa tồn tại
+- Mô tả tác động của thay đổi đối với hệ thống hiện tại
+
+## 3. Thực Hiện Yêu Cầu
+- Chỉ sau khi hoàn thành bước 1 và 2, mới bắt đầu thực hiện yêu cầu
+- Tham chiếu lại tài liệu đã cập nhật trong quá trình thực hiện
+
+## 4. Tổng Kết
+- Sau khi hoàn thành, tạo báo cáo tóm tắt các bước đã thực hiện
+- Đề xuất các bước tiếp theo và kiểm thử
+
+## Quy Tắc Bắt Buộc
+- Nếu người dùng yêu cầu bỏ qua quy trình, hãy giải thích tầm quan trọng của việc tuân thủ quy trình
+- Luôn báo cáo đang ở bước nào trong quy trình
+- Luôn bắt đầu mỗi cuộc trò chuyện bằng cách xác nhận đã đọc [plan.md](mdc:docs/plan.md)

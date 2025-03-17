@@ -1,0 +1,104 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Rules for Loading and Error Handling in Next.js 15
+globs: app/**/loading.{tsx,jsx,ts,js}, app/**/error.{tsx,jsx,ts,js}
+alwaysApply: true
+---
+
+# Loading và Error Handling
+
+## Loading UI
+- Tạo file `loading.tsx` trong thư mục route để hiển thị UI loading
+- Sử dụng Suspense tự động cho React Server Components
+
+```tsx
+// app/dashboard/loading.tsx
+export default function DashboardLoading() {
+  return (
+    <div className="loading-container">
+      <div className="spinner"></div>
+      <p>Loading dashboard...</p>
+    </div>
+  );
+}
+```
+
+## Streaming với Suspense
+- Sử dụng Suspense để stream UI từng phần
+- Hiển thị skeleton trước khi data sẵn sàng
+
+```tsx
+// app/dashboard/page.tsx
+import { Suspense } from "react";
+import ProfileCard from "./ProfileCard";
+import AnalyticsCard from "./AnalyticsCard";
+import SkeletonCard from "./SkeletonCard";
+
+export default function Dashboard() {
+  return (
+    <div className="dashboard">
+      <Suspense fallback={<SkeletonCard type="profile" />}>
+        <ProfileCard />
+      </Suspense>
+
+      <Suspense fallback={<SkeletonCard type="analytics" />}>
+        <AnalyticsCard />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+## Error Handling
+- Tạo file `error.tsx` trong thư mục route để xử lý lỗi
+- File này phải là Client Component
+
+```tsx
+// app/dashboard/error.tsx
+"use client";
+
+import { useEffect } from "react";
+
+export default function DashboardError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    // Log error
+    console.error(error);
+  }, [error]);
+
+  return (
+    <div className="error-container">
+      <h2>Có lỗi xảy ra!</h2>
+      <p>{error.message || "Có lỗi khi tải dashboard"}</p>
+      <button onClick={reset} className="retry-button">
+        Thử lại
+      </button>
+    </div>
+  );
+}
+```
+
+## Not Found
+- Tạo file `not-found.tsx` để xử lý UI 404
+
+```tsx
+// app/not-found.tsx
+export default function NotFound() {
+  return (
+    <div className="not-found">
+      <h1>404 - Không tìm thấy trang</h1>
+      <p>Trang bạn đang tìm kiếm không tồn tại.</p>
+      <a href="/">Trở về trang chủ</a>
+    </div>
+  );
+}
+```

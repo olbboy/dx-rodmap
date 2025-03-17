@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Updated Router Hooks in Next.js 15
+globs: app/**/*.{tsx,jsx,ts,js}
+alwaysApply: true
+---
+
+# Router Hooks trong Next.js 15
+
+## Hooks Mới từ next/navigation
+- Chỉ sử dụng trong Client Components (thêm "use client")
+- Không sử dụng useRouter từ next/router trong app directory
+
+```tsx
+"use client";
+import {
+  useRouter, // Điều hướng
+  usePathname, // Lấy đường dẫn hiện tại
+  useSearchParams, // Lấy query parameters
+  useParams, // Lấy dynamic route parameters
+} from "next/navigation";
+```
+
+## Thay Đổi Quan Trọng
+- `useRouter()` không còn trả về pathname, query, locale
+- Sử dụng `usePathname()` để lấy đường dẫn hiện tại
+- Sử dụng `useSearchParams()` để lấy query parameters
+- Sử dụng `useParams()` để lấy dynamic route parameters
+
+## Chia Sẻ Components Giữa pages và app
+- Sử dụng `useRouter` từ `next/compat/router` khi cần chia sẻ components

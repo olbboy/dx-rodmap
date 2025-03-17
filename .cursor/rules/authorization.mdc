@@ -1,0 +1,50 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Authorization APIs in Next.js 15.1+
+globs: app/**/*.{tsx,jsx,ts,js}
+alwaysApply: true
+---
+
+# Authorization APIs (Next.js 15.1+)
+
+## Cấu hình
+- Kích hoạt tính năng trong next.config.ts:
+
+```tsx
+const nextConfig: NextConfig = {
+  experimental: {
+    authInterrupts: true,
+  },
+};
+```
+
+## Sử dụng forbidden() và unauthorized()
+- Có thể sử dụng trong Server Actions, Server Components, Client Components hoặc Route Handlers
+- Sử dụng `forbidden()` khi người dùng đã xác thực nhưng không có quyền truy cập
+- Sử dụng `unauthorized()` khi người dùng chưa xác thực
+
+```tsx
+import { forbidden, unauthorized } from "next/navigation";
+
+export default async function ProtectedPage() {
+  const session = await getSession();
+
+  if (!session) {
+    unauthorized(); // Chuyển hướng đến trang unauthorized.tsx
+  }
+
+  if (session.role !== "admin") {
+    forbidden(); // Chuyển hướng đến trang forbidden.tsx
+  }
+
+  return <div>Protected Content</div>;
+}
+```
+
+## Custom Error Pages
+- Tạo app/forbidden.tsx và app/unauthorized.tsx để tùy chỉnh trang lỗi
+

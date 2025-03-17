@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Rules for Layout and Template Patterns in Next.js 15
+globs: app/**/layout.{tsx,jsx,ts,js}, app/**/template.{tsx,jsx,ts,js}
+alwaysApply: true
+---
+
+# Layout và Template Patterns
+
+## Root Layout (Bắt buộc)
+- Root layout PHẢI chứa các thẻ `<html>` và `<body>`
+- Nên bao gồm các UI chung (header, footer, navigation)
+- Không nên bao gồm logic phức tạp
+
+```tsx
+// app/layout.tsx
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <header>/* Navigation /</header>
+        <main>{children}</main>
+        <footer>/ Footer */</footer>
+      </body>
+    </html>
+  );
+}
+```
+
+## Nested Layouts
+- Sử dụng nested layouts cho các phần khác nhau của ứng dụng
+- Mỗi layout sẽ lồng trong layout cha
+
+```tsx
+
+// app/dashboard/layout.tsx
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="dashboard-layout">
+      <nav>/* Dashboard nav */</nav>
+      <div>{children}</div>
+    </div>
+  );
+}
+```
+
+## Templates
+- Sử dụng templates khi cần remount UI với mỗi navigation
+- Phù hợp khi cần reset state hoặc trigger animations
+- Tránh sử dụng cho UI cố định như navigation
+
+```tsx
+// app/template.tsx
+"use client";
+import { useEffect } from "react";
+import { Analytics } from "@/components/analytics";
+
+export default function Template({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    // Chạy animation hoặc logic với mỗi navigation
+  }, []);
+
+  return (
+    <div className="template">
+      <Analytics />
+      {children}
+    </div>
+  );
+}
+```
+
+## Khi nào dùng layout vs template
+- Layouts: Cho UI persistent giữa các navigations
+- Templates: Khi cần reset state, effects, hoặc animations với mỗi navigation

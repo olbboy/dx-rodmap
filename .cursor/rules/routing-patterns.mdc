@@ -1,0 +1,89 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Rules for Advanced Routing Patterns in Next.js 15
+globs: app/**/*
+alwaysApply: true
+---
+
+# Routing Patterns
+
+## Cấu trúc file
+- `page.tsx`: File chính để render route
+- `layout.tsx`: UI shared giữa các routes
+- `loading.tsx`: UI loading cho route
+- `error.tsx`: UI xử lý lỗi cho route
+- `not-found.tsx`: UI 404 custom
+
+## Dynamic Routes
+- Sử dụng `[param]` cho dynamic segments:
+
+```tsx
+// app/products/[id]/page.tsx
+export default function ProductPage({ params }: { params: { id: string } }) {
+  return <div>Product: {params.id}</div>;
+}
+```
+
+## Route Groups
+- Sử dụng `(groupName)` để nhóm routes mà không ảnh hưởng URL
+- Hữu ích để phân chia code và chia sẻ layouts
+
+```md
+app/
+├── (marketing)/ // Không ảnh hưởng URL
+│ ├── about/
+│ │ └── page.tsx // → /about
+│ └── blog/
+│ └── page.tsx // → /blog
+└── (shop)/
+├── products/
+│ └── page.tsx // → /products
+└── cart/
+└── page.tsx // → /cart
+```
+
+## Parallel Routes
+- Sử dụng `@folder` để render nhiều trang cùng lúc trên cùng một UI
+- Hữu ích cho dashboards và layouts phức tạp
+
+```tsx
+// app/dashboard/layout.tsx
+export default function DashboardLayout({
+  children,
+  analytics,
+  team,
+}: {
+  children: React.ReactNode;
+  analytics: React.ReactNode;
+  team: React.ReactNode;
+}) {
+  return (
+    <div>
+      {children}
+      <div className="dashboard-grid">
+        {analytics}
+        {team}
+      </div>
+    </div>
+  );
+}
+```
+
+## Intercepting Routes
+- Sử dụng `(..)` hoặc `(...)` để chặn routes
+- Hữu ích cho modals mà không làm mất context
+
+```md
+app/
+├── feed/
+│ └── page.tsx
+└── photo/
+├── [id]/
+│ └── page.tsx // → /photo/1
+└── (.)feed/
+└── page.tsx // chặn /feed trong context /photo
+```

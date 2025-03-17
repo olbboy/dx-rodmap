@@ -1,0 +1,144 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Common Mistakes to Avoid in Next.js 15 App Router
+globs: app/**/*.{tsx,jsx,ts,js}
+alwaysApply: true
+---
+
+# Lỗi Thường Gặp Khi Sử Dụng Next.js 15 App Router
+
+## Sử dụng Sai Server và Client Components
+
+### TRÁNH:
+// ❌ Sai: Sử dụng hooks trong Server Component
+```tsx
+export default function ServerComponent() {
+  const [count, setCount] = useState(0); // Lỗi: hooks không thể dùng trong Server Components
+  return <div>{count}</div>;
+}
+```
+
+### ĐÚNG:
+// ✅ Đúng: Sử dụng "use client" khi cần hooks
+```tsx
+"use client";
+export default function ClientComponent() {
+  const [count, setCount] = useState(0);
+  return <div>{count}</div>;
+}
+```
+
+## Gọi Route Handlers từ Server Components
+
+### TRÁNH:
+// ❌ Sai: Gọi route handler từ Server Component
+```tsx
+export default async function ServerComponent() {
+  const res = await fetch("/api/data"); // Không hiệu quả, tạo HTTP request mới
+  const data = await res.json();
+  return <div>{data.title}</div>;
+}
+```
+
+### ĐÚNG:
+// ✅ Đúng: Gọi trực tiếp logic từ Server Component
+// Tách logic vào file riêng
+```tsx
+// Tách logic vào file riêng
+import { getData } from "@/lib/data";
+
+export default async function ServerComponent() {
+  const data = await getData(); // Gọi function trực tiếp
+  return <div>{data.title}</div>;
+}
+```
+
+## Không Hiểu Về Caching trong Next.js 15
+
+### TRÁNH:
+// ❌ Sai: Giả định fetch được cache mặc định
+```tsx
+export default async function Page() {
+  const res = await fetch("https://api.example.com/data");
+  const data = await res.json();
+  return <div>{data.title}</div>;
+}
+```
+
+### ĐÚNG:
+// ✅ Đúng: Chỉ định rõ ràng caching behavior
+```tsx
+export default async function Page() {
+  const res = await fetch("https://api.example.com/data", {
+    cache: "force-cache", // Chỉ định rõ ràng khi cần cache
+  });
+  const data = await res.json();
+  return <div>{data.title}</div>;
+}
+```
+
+## Sử dụng Context Không Đúng Cách
+
+### TRÁNH:
+// ❌ Sai: Đặt Context Provider trong Server Component
+```tsx
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <ThemeProvider>
+          {" "}
+          {/* Lỗi nếu ThemeProvider là Client Component */}
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+### ĐÚNG:
+// ✅ Đúng: Tách Provider vào Client Component riêng
+// app/providers.js
+```tsx
+"use client";
+export function Providers({ children }) {
+  return <ThemeProvider>{children}</ThemeProvider>;
+}
+
+// app/layout.js
+import { Providers } from "./providers";
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+## Overusing "use client"
+
+### TRÁNH:
+// ❌ Sai: Thêm "use client" không cần thiết
+```tsx
+"use client"
+export default function StaticComponent() {
+  return <div>Static content</div>; // Không cần client component
+}
+```
+
+### ĐÚNG:
+// ✅ Đúng: Chỉ sử dụng "use client" khi cần thiết
+```tsx
+export default function StaticComponent() {
+  return <div>Static content</div>; // Server component mặc định
+}
+```
+

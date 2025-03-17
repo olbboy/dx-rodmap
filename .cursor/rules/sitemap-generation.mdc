@@ -1,0 +1,59 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Sitemap Generation in Next.js 15
+globs: app/sitemap.{ts,js}
+alwaysApply: true
+---
+
+# Sitemap Generation
+
+## Cơ chế Sitemap Tích Hợp
+- Tạo file app/sitemap.ts để tự động tạo sitemap
+- Hỗ trợ cả định dạng XML và JavaScript/TypeScript
+
+## Sitemap Tĩnh
+// app/sitemap.xml
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+<loc>https://example.com</loc>
+<lastmod>2023-04-06T15:02:24.021Z</lastmod>
+<changefreq>yearly</changefreq>
+<priority>1</priority>
+</url>
+<!-- Thêm URLs khác -->
+</urlset>
+```
+
+## Sitemap Động
+// app/sitemap.ts
+```ts
+import { MetadataRoute } from "next";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Fetch data từ CMS, database, etc.
+  const posts = await fetchPosts();
+
+  const postEntries = posts.map((post) => ({
+    url: `https://example.com/blog/${post.slug}`,
+    lastModified: post.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  return [
+    {
+      url: "https://example.com",
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 1,
+    },
+    ...postEntries,
+  ];
+}
+```
