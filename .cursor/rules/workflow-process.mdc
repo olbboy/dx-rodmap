@@ -19,7 +19,7 @@ Khi nhận bất kỳ yêu cầu nào, bạn PHẢI làm theo trình tự sau:
 - Nếu không tìm thấy file [plan.md](mdc:docs/plan.md), hãy yêu cầu người dùng cung cấp
 
 ## 2. Cập Nhật Giải Pháp và Tài Liệu
-- Trước khi viết code, đề xuất tạo tài liệu có tên {solution-system-sprint-<sprint_number>}.md, {solution-design-<sprint_number>}.md trong folder implements
+- Trước khi bắt đầu mỗi sprint, đề xuất tạo tài liệu có tên {solution-system-sprint-<sprint_number>}.md, {solution-design-<sprint_number>}.md trong folder implements
 - Tự động tạo file {solution-system-sprint-<sprint_number>}.md, {solution-design-<sprint_number>}.md trong folder implement để ghi lại các thay đổi nếu chưa tồn tại
 - Mô tả tác động của thay đổi đối với hệ thống hiện tại
 
