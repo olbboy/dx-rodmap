@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import Link from "next/link";
-import { ChevronLeft, Kanban, LayoutGrid, Settings } from "lucide-react";
+import { ChevronLeft, Kanban, LayoutGrid, Settings, ChartGantt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -37,6 +37,12 @@ export default async function RoadmapLayout({ children, params }: RoadmapLayoutP
               <Link href={`/roadmaps/${id}/kanban`}>
                 <Kanban className="h-4 w-4 mr-1" />
                 Kanban
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="timeline" asChild>
+              <Link href={`/roadmaps/${id}/timeline`}>
+                <ChartGantt className="h-4 w-4 mr-1" />
+                Timeline
               </Link>
             </TabsTrigger>
             <TabsTrigger value="settings" asChild>

@@ -46,6 +46,7 @@ export interface Post {
   status_id: string;
   start_date: string | null;
   end_date: string | null;
+  due_date: string | null;
   eta: string | null;
   tags: string[];
   priority: 'low' | 'medium' | 'high' | 'urgent' | null;
@@ -57,6 +58,7 @@ export interface Post {
   updated_by: string | null;
   parent_id: string | null;
   order_index: number;
+  order?: number;
   metadata: Record<string, any> | null;
   deleted_at: string | null;
   status?: Status;
@@ -87,27 +89,36 @@ export interface RoadmapMember {
 
 export interface Milestone {
   id: string;
-  roadmap_id: string;
+  roadmapId: string;
   title: string;
-  description: string | null;
-  date: string;
-  color: string | null;
-  created_at: string;
-  created_by: string;
-  updated_at: string;
-  is_completed: boolean;
-  completed_at: string | null;
-  completed_by: string | null;
-  deleted_at: string | null;
+  description?: string;
+  date: string; // ISO date string
+  color?: string;
+  createdAt: string;
+  updatedAt: string;
+  is_completed?: boolean;
+  completed_at?: string;
+  completed_by?: string;
+  created_by?: string;
+  deleted_at?: string;
+}
+
+export enum DependencyType {
+  FinishToStart = 'finish_to_start',
+  StartToStart = 'start_to_start',
+  FinishToFinish = 'finish_to_finish',
+  StartToFinish = 'start_to_finish'
 }
 
 export interface Dependency {
   id: string;
-  source_post_id: string;
-  target_post_id: string;
-  type: "blocks" | "blocked_by" | "relates_to" | "duplicates";
-  created_at: string;
-  created_by: string;
+  roadmapId: string;
+  sourceId: string;
+  targetId: string;
+  dependencyType: DependencyType;
+  createdAt: string;
+  updatedAt: string;
+  created_by?: string;
   source_post?: Post;
   target_post?: Post;
 }
