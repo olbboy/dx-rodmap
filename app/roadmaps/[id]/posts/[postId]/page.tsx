@@ -14,6 +14,8 @@ import { getStatusById } from "@/lib/actions/status";
 import { Calendar, CalendarCheck, ChevronLeft, Pencil, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
+import { CommentList } from "@/components/comment/comment-list";
 
 export async function generateMetadata({ params }: { params: { postId: string } }) {
   const params_awaited = await params;
@@ -171,6 +173,12 @@ export default async function PostDetailsPage(props: {
               </div>
             </div>
           )}
+
+          {/* Comments Section */}
+          <div className="pt-8">
+            <Separator className="my-6" />
+            <CommentList postId={postId} />
+          </div>
         </div>
         
         <div className="space-y-6">

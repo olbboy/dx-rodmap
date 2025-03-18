@@ -68,6 +68,30 @@ The application requires specific tables and relationships in Supabase:
 
 To set up the database manually, run the SQL in `scripts/db-schema.sql` through the Supabase SQL editor.
 
+## Comments Feature
+
+The application includes a commenting system for posts, allowing users to discuss each post. To enable this feature, you need to run the database setup script.
+
+### Database Setup for Comments
+
+1. Open the Supabase dashboard
+2. Go to the SQL Editor
+3. Run the full `scripts/db-schema.sql` script
+
+This will:
+- Create the `comments` table for storing comments
+- Create the `users` table to mirror data from `auth.users`
+- Set up a trigger to automatically sync user data from auth to public schema
+- Establish proper Row Level Security policies
+
+### How the Comments System Works
+
+- Users can add comments to any post they can view
+- Comments support threaded replies (one level deep)
+- Only the comment author can edit their comments
+- Both the comment author and roadmap owner can delete comments
+- Comments show user avatars and names from their profile
+
 ## Common Issues and Solutions
 
 ### Relationship Errors
