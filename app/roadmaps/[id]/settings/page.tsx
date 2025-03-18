@@ -55,18 +55,56 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   }
 
   // Fetch statuses
-  const { data: statuses = [] } = await supabase
+  let { data: statuses = [], error: statusesError } = await supabase
     .from("statuses")
     .select("*")
     .eq("roadmap_id", id)
-    .order("order", { ascending: true });
+    .order("order_index", { ascending: true });
+  
+  console.log("Statuses query result:", { statuses, error: statusesError });
+
+  // If no statuses exist, create default ones
+  if (!statuses || statuses.length === 0) {
+    console.log("No statuses found, creating defaults");
+    const defaultStatuses = [
+      { name: "To Do", color: "#4299e1", order_index: 0 },
+      { name: "In Progress", color: "#ed8936", order_index: 1 },
+      { name: "Done", color: "#48bb78", order_index: 2 },
+    ];
+
+    for (const status of defaultStatuses) {
+      await supabase
+        .from("statuses")
+        .insert({
+          roadmap_id: id,
+          name: status.name,
+          color: status.color,
+          order_index: status.order_index,
+          created_by: user.id
+        });
+    }
+
+    // Fetch again after creation
+    const { data: newStatuses = [] } = await supabase
+      .from("statuses")
+      .select("*")
+      .eq("roadmap_id", id)
+      .order("order_index", { ascending: true });
+      
+    if (newStatuses) {
+      console.log("Created default statuses:", newStatuses);
+      statuses = [...newStatuses];
+    }
+  }
 
   // Fetch tags
-  const { data: tags = [] } = await supabase
+  const { data: tags = [], error: tagsError } = await supabase
     .from("tags")
     .select("*")
     .eq("roadmap_id", id)
     .order("name", { ascending: true });
+  
+  console.log("Tags query result:", { tags, error: tagsError });
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8">
@@ -74,6 +112,22 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
       <p className="text-muted-foreground">
         Manage settings for the {roadmap.title} roadmap.
       </p>
+      
+      {statusesError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+          <h3 className="font-medium">Error fetching statuses</h3>
+          <p className="text-sm">{statusesError.message || "An unknown error occurred"}</p>
+          <p className="text-sm mt-1">This may happen if the database tables haven't been created yet.</p>
+        </div>
+      )}
+      
+      {tagsError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+          <h3 className="font-medium">Error fetching tags</h3>
+          <p className="text-sm">{tagsError.message || "An unknown error occurred"}</p>
+          <p className="text-sm mt-1">This may happen if the database tables haven't been created yet.</p>
+        </div>
+      )}
       
       <div className="space-y-8">
         <div className="rounded-lg border bg-card p-6">

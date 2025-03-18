@@ -64,9 +64,9 @@ export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
   // If no statuses exist, create default ones
   if (statuses.length === 0) {
     const defaultStatuses = [
-      { name: "To Do", color: "#4299e1", order: 0 },
-      { name: "In Progress", color: "#ed8936", order: 1 },
-      { name: "Done", color: "#48bb78", order: 2 },
+      { name: "To Do", color: "#4299e1", order_index: 0 },
+      { name: "In Progress", color: "#ed8936", order_index: 1 },
+      { name: "Done", color: "#48bb78", order_index: 2 },
     ];
 
     for (const status of defaultStatuses) {
@@ -76,7 +76,8 @@ export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
           roadmap_id: id,
           name: status.name,
           color: status.color,
-          order: status.order,
+          order_index: status.order_index,
+          created_by: user.id
         });
     }
 
@@ -85,7 +86,7 @@ export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
       .from("statuses")
       .select("*")
       .eq("roadmap_id", id)
-      .order("order", { ascending: true });
+      .order("order_index", { ascending: true });
       
     if (newStatuses) {
       statuses = [...newStatuses];

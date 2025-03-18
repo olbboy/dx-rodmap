@@ -8,49 +8,44 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function testTables() {
   try {
-    // Test database tables
-    console.log('\nListing available tables:');
+    // First get the user ID to use as created_by
+    const userId = 'cc4a82bf-1f9a-44ae-b3ad-27eae06a04ab'; // Owner ID of the roadmap
     
-    // Try basic fetch all tables from a specific roadmap ID
-    const roadmapId = 'df3033db-856a-44c2-9850-8d74d806325c';
-    
-    console.log(`\nChecking roadmap ${roadmapId}:`);
-    const { data: roadmap, error: roadmapError } = await supabase
-      .from('roadmaps')
-      .select('*')
-      .eq('id', roadmapId)
-      .single();
+    // Test status creation with order_index and created_by
+    console.log('\nTrying to insert a test status with order_index and created_by:');
+    const { data: insertedStatus, error: insertError } = await supabase
+      .from('statuses')
+      .insert({
+        name: 'Test Status',
+        color: '#ff0000',
+        roadmap_id: 'df3033db-856a-44c2-9850-8d74d806325c',
+        order_index: 0,
+        created_by: userId
+      })
+      .select();
       
-    if (roadmapError) {
-      console.error('Error fetching roadmap:', roadmapError);
+    if (insertError) {
+      console.error('Error inserting test status:', insertError);
     } else {
-      console.log('Roadmap:', roadmap);
+      console.log('Test status inserted successfully:', insertedStatus);
+    }
+    
+    // Try to query statuses to see what fields are available
+    console.log('\nGetting all fields from statuses:');
+    const { data: allStatuses, error: allError } = await supabase
+      .from('statuses')
+      .select('*')
+      .limit(5);
       
-      // Now try to get user info using the owner_id
-      if (roadmap.owner_id) {
-        console.log(`\nTrying to get owner info for ID: ${roadmap.owner_id}`);
-        // Try auth.users
-        const { data: owner, error: ownerError } = await supabase.auth.admin.getUserById(roadmap.owner_id);
-        
-        if (ownerError) {
-          console.error('Error fetching owner from auth.admin:', ownerError);
-        } else {
-          console.log('Owner from auth.admin:', owner);
-        }
+    if (allError) {
+      console.error('Error getting statuses:', allError);
+    } else {
+      console.log('Statuses found:', allStatuses);
+      if (allStatuses && allStatuses.length > 0) {
+        console.log('Status fields available:', Object.keys(allStatuses[0]));
       }
     }
     
-    // Get Supabase database schema version
-    console.log('\nTesting auth endpoints:');
-    
-    // Try getting current user
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError) {
-      console.error('Error getting user:', userError);
-    } else {
-      console.log('Current user:', userData);
-    }
   } catch (error) {
     console.error('Unexpected error:', error);
   }

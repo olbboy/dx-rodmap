@@ -1,13 +1,17 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, PencilIcon, UsersIcon } from "lucide-react";
-import { FeatureList } from "@/components/feature/feature-list";
-import { Feature, Status, Tag } from "@/types";
+import { auth } from "@/lib/auth";
+import { getRoadmapById } from "@/lib/actions/roadmap";
+import { getPostsByRoadmapId } from "@/lib/actions/post";
+import { getAllStatuses } from "@/lib/actions/status";
+import { getAllUsers } from "@/lib/actions/user";
+import { PostsList } from "@/components/post/posts-list";
+import { Post, Status, User } from "@/types";
 
 interface RoadmapPageProps {
   params: {
@@ -15,135 +19,52 @@ interface RoadmapPageProps {
   };
 }
 
-export async function generateMetadata({
-  params,
-}: RoadmapPageProps): Promise<Metadata> {
-  params = await params;
-  const id = params.id;
-  const supabase = await createClient();
-  const { data: roadmap } = await supabase
-    .from("roadmaps")
-    .select("title")
-    .eq("id", id)
-    .single();
-
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  // Await params
+  const params_awaited = await params;
+  const id = params_awaited.id;
+  
+  const { data: roadmap } = await getRoadmapById(id);
+  
   return {
-    title: roadmap?.title || "Roadmap",
-    description: "View roadmap details and features",
+    title: roadmap ? `${roadmap.title}` : "Roadmap",
+    description: roadmap ? `View roadmap: ${roadmap.title}` : "View roadmap details",
   };
 }
 
-export default async function RoadmapPage({ params }: RoadmapPageProps) {
-  try {
-    params = await params;
-    const id = params.id;
-    console.log(`Loading roadmap page for ID: ${id}`);
-    
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log(`Current user: ${user?.id}`);
-    
-    // First, get the roadmap data
-    const { data: roadmap, error } = await supabase
-      .from("roadmaps")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error(`Error fetching roadmap ${id}:`, error);
-      notFound();
-    }
-
-    if (!roadmap) {
-      console.error(`Roadmap ${id} not found`);
-      notFound();
-    }
-
-    console.log(`Roadmap found:`, roadmap);
-
-    // Check if user has access to this roadmap
-    const isOwner = user?.id === roadmap.owner_id;
-    const isPublic = roadmap.is_public;
-    
-    console.log(`Access check: isOwner=${isOwner}, isPublic=${isPublic}`);
-    
-    if (!isOwner && !isPublic) {
-      console.error(`Access denied to roadmap ${id} for user ${user?.id}`);
-      notFound();
-    }
-
-    // Fetch features
-    const { data: features = [] } = await supabase
-      .from("features")
-      .select(`
-        *,
-        status:status_id (
-          id,
-          name,
-          color
-        ),
-        assignee:assignee_id (
-          id,
-          email,
-          display_name
-        )
-      `)
-      .eq("roadmap_id", id)
-      .order("order", { ascending: true });
-
-    // Get tags for features
-    let featureTags: Record<string, any[]> = {};
-    
-    if (features && features.length > 0) {
-      const featureIds = features.map(feature => feature.id);
-      
-      const { data: tagRelations = [] } = await supabase
-       .from("feature_tags")
-       .select(`
-         feature_id,
-          tag:tag_id (
-            id,
-            name,
-            color
-          )
-       `)
-        .in("feature_id", featureIds);
-
-      // Group tags by feature
-      if (tagRelations) {
-        featureTags = tagRelations.reduce((acc: Record<string, any[]>, rel: any) => {
-          if (!acc[rel.feature_id]) {
-            acc[rel.feature_id] = [];
-          }
-          acc[rel.feature_id].push(rel.tag);
-          return acc;
-        }, {});
-      }
-    }
-
-    // Attach tags to features
-    const featuresWithTags = features ? features.map(feature => ({
-      ...feature,
-      tags: featureTags[feature.id] || []
-    })) : [];
-
-    // Fetch statuses
-    const { data: statuses = [] } = await supabase
-      .from("statuses")
-      .select("*")
-      .eq("roadmap_id", id)
-      .order("order", { ascending: true });
-
-    // Fetch tags
-    const { data: tags = [] } = await supabase
-      .from("tags")
-      .select("*")
-      .eq("roadmap_id", id)
-      .order("name", { ascending: true });
-
-    return (
-      <div className="flex flex-col gap-6 p-4 md:p-8">
+export default async function RoadmapPage({ params }: { params: { id: string } }) {
+  const session = await auth();
+  
+  if (!session?.id) {
+    redirect("/login");
+  }
+  
+  // Await the params
+  const params_awaited = await params;
+  const id = params_awaited.id;
+  
+  // Get roadmap
+  const { data: roadmap } = await getRoadmapById(id);
+  
+  if (!roadmap) {
+    redirect("/dashboard");
+  }
+  
+  // Get posts
+  const posts = await getPostsByRoadmapId(id);
+  
+  // Get statuses
+  const statuses = await getAllStatuses(id);
+  
+  // Get users
+  const users = await getAllUsers();
+  
+  // Check if user is owner
+  const isOwner = roadmap.owner_id === session.id;
+  
+  return (
+    <div className="container py-6">
+      <div className="flex flex-col gap-6 mb-8">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -152,15 +73,18 @@ export default async function RoadmapPage({ params }: RoadmapPageProps) {
                 <Badge variant="outline">Public</Badge>
               )}
             </div>
-            <p className="text-muted-foreground mt-1">
-              {roadmap.description || "No description provided"}
-            </p>
+            {roadmap.description && (
+              <p className="text-muted-foreground mt-1">
+                {roadmap.description}
+              </p>
+            )}
           </div>
+          
           {isOwner && (
             <div className="flex items-center gap-2 mt-4 md:mt-0">
               <Button asChild>
-                <Link href={`/roadmaps/${id}/features/new`}>
-                  Add Feature
+                <Link href={`/roadmaps/${id}/posts/new`}>
+                  Add Post
                 </Link>
               </Button>
               <Button asChild variant="outline">
@@ -176,46 +100,39 @@ export default async function RoadmapPage({ params }: RoadmapPageProps) {
         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <UsersIcon className="h-4 w-4" />
-            <span>Owner: {roadmap.owner_id}</span>
+            <span>Owner: {session.email}</span>
           </div>
           <div className="flex items-center gap-1">
             <CalendarIcon className="h-4 w-4" />
             <span>Updated {formatDistanceToNow(new Date(roadmap.updated_at), { addSuffix: true })}</span>
           </div>
         </div>
-        
-        <div className="grid gap-6">
-          <div className="rounded-lg border bg-card p-6">
-            <h2 className="text-xl font-semibold mb-4">Features</h2>
-            {featuresWithTags && featuresWithTags.length > 0 ? (
-              <FeatureList 
-                features={featuresWithTags as Feature[]} 
-                roadmapId={id} 
-                statuses={statuses as Status[]} 
-                tags={tags as Tag[]} 
-                isOwner={isOwner} 
-              />
-            ) : (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-medium mb-2">No features yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Start adding features to your roadmap to track your progress.
-                </p>
-                {isOwner && (
-                  <Button asChild>
-                    <Link href={`/roadmaps/${id}/features/new`}>
-                      Add Feature
-                    </Link>
-                  </Button>
-                )}
-              </div>
+      </div>
+      
+      <div className="mt-8">
+        {posts.length === 0 ? (
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold mb-2">No posts yet</h2>
+            <p className="text-muted-foreground mb-6">
+              Get started by creating your first post
+            </p>
+            {isOwner && (
+              <Button asChild>
+                <Link href={`/roadmaps/${id}/posts/new`}>
+                  Create Post
+                </Link>
+              </Button>
             )}
           </div>
-        </div>
+        ) : (
+          <PostsList 
+            posts={posts}
+            statuses={statuses}
+            users={users}
+            roadmapId={id}
+          />
+        )}
       </div>
-    );
-  } catch (error) {
-    console.error("Error in RoadmapPage:", error);
-    notFound();
-  }
+    </div>
+  );
 } 

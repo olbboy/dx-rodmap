@@ -10,27 +10,25 @@ interface RoadmapData {
   is_public: boolean;
 }
 
-export async function getRoadmapById(id: string): Promise<Roadmap | null> {
+export async function getRoadmapById(id: string) {
   try {
-    console.log(`Getting roadmap with ID: ${id}`);
     const supabase = await createClient();
-    
-    const { data: roadmap, error } = await supabase
+
+    const { data, error } = await supabase
       .from("roadmaps")
       .select("*")
       .eq("id", id)
       .single();
-    
+
     if (error) {
-      console.error("Error fetching roadmap:", error);
-      return null;
+      console.error("Error fetching roadmap by id:", error);
+      return { data: null, error };
     }
-    
-    console.log("Roadmap found:", roadmap);
-    return roadmap;
+
+    return { data, error: null };
   } catch (error) {
     console.error("Error in getRoadmapById:", error);
-    return null;
+    return { data: null, error };
   }
 }
 

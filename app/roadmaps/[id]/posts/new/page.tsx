@@ -1,18 +1,18 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getRoadmapById } from "@/lib/actions/roadmap";
-import { getPostsByRoadmapId } from "@/lib/actions/post";
 import { getStatuses } from "@/lib/actions/status";
 import { getAllUsers } from "@/lib/actions/user";
-import { KanbanBoard } from "@/components/kanban/kanban-board";
+import { PostForm } from "@/components/post/post-form";
 
 export const metadata = {
-  title: "Kanban Board",
-  description: "Manage posts using the kanban board",
+  title: "New Post",
+  description: "Create a new post for your roadmap",
 };
 
-export default async function KanbanPage(props: {
+export default async function NewPostPage(props: {
   params: { id: string };
+  searchParams: { status?: string };
 }) {
   const session = await auth();
   
@@ -23,6 +23,7 @@ export default async function KanbanPage(props: {
   // Await the params object
   const params = await props.params;
   const id = params.id;
+  const { status: initialStatusId } = props.searchParams;
   
   // Get roadmap
   const { data: roadmap } = await getRoadmapById(id);
@@ -31,8 +32,10 @@ export default async function KanbanPage(props: {
     redirect("/dashboard");
   }
   
-  // Get posts
-  const posts = await getPostsByRoadmapId(id);
+  // Check if user is owner
+  if (roadmap.owner_id !== session.id) {
+    redirect(`/roadmaps/${id}`);
+  }
   
   // Get statuses
   const statuses = await getStatuses(id);
@@ -45,18 +48,25 @@ export default async function KanbanPage(props: {
   // Get users
   const users = await getAllUsers();
   
-  // Determine if user is owner
-  const isOwner = roadmap.owner_id === session.id;
-  
   return (
     <div className="container py-6">
-      <h1 className="text-3xl font-bold mb-6">Kanban Board</h1>
-      <KanbanBoard 
-        posts={posts} 
+      <h1 className="text-3xl font-bold mb-6">New Post</h1>
+      <PostForm 
+        roadmapId={id}
         statuses={statuses}
         users={users}
-        roadmapId={id}
-        isOwner={isOwner}
+        initialValues={{
+          title: "",
+          description: "",
+          status_id: initialStatusId || statuses[0].id,
+          assignee_id: "",
+          start_date: "",
+          end_date: "",
+          eta: "",
+          priority: undefined,
+          progress: 0,
+          tags: []
+        }}
       />
     </div>
   );

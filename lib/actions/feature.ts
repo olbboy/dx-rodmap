@@ -20,15 +20,23 @@ export async function getFeaturesByRoadmapId(roadmapId: string): Promise<Feature
     console.log(`Getting features for roadmap ID: ${roadmapId}`);
     const supabase = await createClient();
     
-    // Fetch features
+    // Check if features table exists
+    const { data: tablesData, error: tablesError } = await supabase
+      .from('information_schema.tables')
+      .select('table_name')
+      .eq('table_schema', 'public')
+      .eq('table_name', 'features');
+    
+    if (tablesError) {
+      console.error("Error checking tables:", tablesError);
+    } else {
+      console.log("Tables check:", tablesData);
+    }
+    
+    // Fetch features first
     const { data: features, error } = await supabase
       .from("features")
-      .select(`
-        *,
-        status:statuses(*),
-        assignee:profiles(*),
-        tags(*)
-      `)
+      .select("*")
       .eq("roadmap_id", roadmapId)
       .order("order");
     
@@ -37,8 +45,99 @@ export async function getFeaturesByRoadmapId(roadmapId: string): Promise<Feature
       return [];
     }
     
-    console.log(`Found ${features?.length || 0} features`);
-    return features || [];
+    // Early return if no features
+    if (!features || features.length === 0) {
+      console.log("No features found for this roadmap");
+      return [];
+    }
+    
+    // Get feature IDs for related data queries
+    const featureIds = features.map(feature => feature.id);
+    
+    // Fetch statuses separately
+    const { data: statuses = [] } = await supabase
+      .from("statuses")
+      .select("*")
+      .eq("roadmap_id", roadmapId);
+    
+    console.log("Fetched statuses:", statuses);
+    
+    // Map statuses by ID for quick lookup
+    const statusMap: Record<string, any> = {};
+    if (statuses) {
+      statuses.forEach(status => {
+        statusMap[status.id] = status;
+      });
+    }
+    
+    // Fetch assignees (users/profiles)
+    const userIds = features
+      .map(feature => feature.assignee_id)
+      .filter((id): id is string => id !== null);
+    
+    const assigneeMap: Record<string, any> = {};
+    if (userIds.length > 0) {
+      const { data: users = [] } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds);
+        
+      if (users && users.length > 0) {
+        users.forEach(user => {
+          assigneeMap[user.id] = user;
+        });
+      }
+    }
+    
+    // Fetch tags for features
+    const tagsByFeature: Record<string, any[]> = {};
+    if (featureIds.length > 0) {
+      // First, get feature-tag relationships
+      const { data: featureTags = [] } = await supabase
+        .from("feature_tags")
+        .select("feature_id, tag_id")
+        .in("feature_id", featureIds);
+      
+      if (featureTags && featureTags.length > 0) {
+        // Get all the tag IDs
+        const tagIds = [...new Set(featureTags.map(ft => ft.tag_id))];
+        
+        // Fetch the actual tags
+        const { data: tags = [] } = await supabase
+          .from("tags")
+          .select("*")
+          .in("id", tagIds);
+        
+        // Create a map of tags by ID
+        const tagMap: Record<string, any> = {};
+        if (tags) {
+          tags.forEach(tag => {
+            tagMap[tag.id] = tag;
+          });
+        }
+        
+        // Group tags by feature
+        featureTags.forEach(ft => {
+          if (!tagsByFeature[ft.feature_id]) {
+            tagsByFeature[ft.feature_id] = [];
+          }
+          if (tagMap[ft.tag_id]) {
+            tagsByFeature[ft.feature_id].push(tagMap[ft.tag_id]);
+          }
+        });
+      }
+    }
+    
+    // Combine all the data
+    const enhancedFeatures = features.map(feature => ({
+      ...feature,
+      status: feature.status_id && statusMap[feature.status_id] ? statusMap[feature.status_id] : null,
+      assignee: feature.assignee_id && assigneeMap[feature.assignee_id] ? assigneeMap[feature.assignee_id] : null,
+      tags: tagsByFeature[feature.id] || []
+    }));
+    
+    console.log(`Found ${enhancedFeatures.length} features`);
+    return enhancedFeatures;
   } catch (error) {
     console.error("Error in getFeaturesByRoadmapId:", error);
     return [];

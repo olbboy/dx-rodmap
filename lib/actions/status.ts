@@ -19,14 +19,14 @@ export async function getStatusesByRoadmapId(roadmapId: string): Promise<Status[
       .from("statuses")
       .select("*")
       .eq("roadmap_id", roadmapId)
-      .order("order");
+      .order("order_index");
     
     if (error) {
       console.error("Error fetching statuses:", error);
       return [];
     }
     
-    console.log(`Found ${statuses?.length || 0} statuses`);
+    console.log(`Found ${statuses?.length || 0} statuses:`, statuses);
     return statuses || [];
   } catch (error) {
     console.error("Error in getStatusesByRoadmapId:", error);
@@ -64,13 +64,13 @@ export async function createStatus(
     // Get max order for placing the new status
     const { data: maxOrderStatus } = await supabase
       .from("statuses")
-      .select("order")
+      .select("order_index")
       .eq("roadmap_id", roadmapId)
-      .order("order", { ascending: false })
+      .order("order_index", { ascending: false })
       .limit(1)
       .single();
 
-    const nextOrder = maxOrderStatus ? maxOrderStatus.order + 1 : 0;
+    const nextOrder = maxOrderStatus ? maxOrderStatus.order_index + 1 : 0;
 
     // Create the status
     const { data: status, error: statusError } = await supabase
@@ -79,7 +79,8 @@ export async function createStatus(
         roadmap_id: roadmapId,
         name: data.name,
         color: data.color,
-        order: nextOrder,
+        order_index: nextOrder,
+        created_by: user.id,
       })
       .select()
       .single();
@@ -223,7 +224,7 @@ export async function deleteStatus(
 
 export async function reorderStatuses(
   roadmapId: string,
-  statusOrder: { id: string; order: number }[]
+  statusOrder: { id: string; order_index: number }[]
 ): Promise<{ success: boolean; error: Error | null }> {
   try {
     const supabase = await createClient();
@@ -252,7 +253,7 @@ export async function reorderStatuses(
     for (const status of statusOrder) {
       const { error } = await supabase
         .from("statuses")
-        .update({ order: status.order })
+        .update({ order_index: status.order_index })
         .eq("id", status.id)
         .eq("roadmap_id", roadmapId);
 
@@ -265,5 +266,54 @@ export async function reorderStatuses(
     return { success: true, error: null };
   } catch (error: any) {
     return { success: false, error };
+  }
+}
+
+export async function getAllStatuses(roadmapId: string) {
+  try {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from("statuses")
+      .select("*")
+      .eq("roadmap_id", roadmapId)
+      .order("order_index", { ascending: true });
+    
+    if (error) {
+      console.error("Error fetching statuses:", error);
+      return [];
+    }
+    
+    return data as Status[];
+  } catch (error) {
+    console.error("Error in getAllStatuses:", error);
+    return [];
+  }
+}
+
+// Alias for getAllStatuses for backward compatibility
+export async function getStatuses(roadmapId: string) {
+  return getAllStatuses(roadmapId);
+}
+
+export async function getStatusById(statusId: string) {
+  try {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from("statuses")
+      .select("*")
+      .eq("id", statusId)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching status:", error);
+      return { data: null, error };
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error("Error in getStatusById:", error);
+    return { data: null, error };
   }
 } 

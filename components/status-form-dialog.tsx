@@ -67,7 +67,10 @@ export function StatusFormDialog({
       }
 
       setIsOpen(false);
-      router.refresh();
+      // Add a small delay to ensure the database operation completes
+      setTimeout(() => {
+        router.refresh();
+      }, 500);
     } catch (error: any) {
       toast.error(error.message || "Failed to save status");
     } finally {
