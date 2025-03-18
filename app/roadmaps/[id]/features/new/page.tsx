@@ -13,11 +13,14 @@ interface NewFeaturePageProps {
 export async function generateMetadata({
   params,
 }: NewFeaturePageProps): Promise<Metadata> {
+  params = await params;
+  const id = params.id;
+  
   const supabase = await createClient();
   const { data: roadmap } = await supabase
     .from("roadmaps")
     .select("title")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   return {
@@ -27,6 +30,9 @@ export async function generateMetadata({
 }
 
 export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
+  params = await params;
+  const id = params.id;
+  
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -37,7 +43,7 @@ export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
   const { data: roadmap, error: roadmapError } = await supabase
     .from("roadmaps")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("owner_id", user.id)
     .single();
 
@@ -49,7 +55,7 @@ export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
   let { data: statuses = [] } = await supabase
     .from("statuses")
     .select("*")
-    .eq("roadmap_id", params.id)
+    .eq("roadmap_id", id)
     .order("order", { ascending: true });
   
   // Ensure statuses is an array
@@ -67,7 +73,7 @@ export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
       await supabase
         .from("statuses")
         .insert({
-          roadmap_id: params.id,
+          roadmap_id: id,
           name: status.name,
           color: status.color,
           order: status.order,
@@ -78,7 +84,7 @@ export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
     const { data: newStatuses = [] } = await supabase
       .from("statuses")
       .select("*")
-      .eq("roadmap_id", params.id)
+      .eq("roadmap_id", id)
       .order("order", { ascending: true });
       
     if (newStatuses) {
@@ -90,7 +96,7 @@ export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
   const { data: tags = [] } = await supabase
     .from("tags")
     .select("*")
-    .eq("roadmap_id", params.id)
+    .eq("roadmap_id", id)
     .order("name", { ascending: true });
 
   // Fetch assignable users (currently just the owner, but could be expanded for teams)
@@ -110,7 +116,7 @@ export default async function NewFeaturePage({ params }: NewFeaturePageProps) {
       <div className="grid gap-6">
         <div className="rounded-lg border bg-card p-6">
           <FeatureForm 
-            roadmapId={params.id} 
+            roadmapId={id} 
             statuses={statuses as Status[]} 
             tags={(tags || []) as Tag[]} 
             users={(users || []) as User[]} 

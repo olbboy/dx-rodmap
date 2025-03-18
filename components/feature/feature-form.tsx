@@ -77,7 +77,7 @@ export function FeatureForm({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
+  const handleSelectChange = (name: string, value: string | null) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -208,15 +208,15 @@ export function FeatureForm({
         <div className="grid gap-2">
           <Label htmlFor="assignee">Assignee</Label>
           <Select
-            value={formData.assignee_id || ""}
-            onValueChange={value => handleSelectChange("assignee_id", value)}
+            value={formData.assignee_id || "unassigned"}
+            onValueChange={value => handleSelectChange("assignee_id", value === "unassigned" ? null : value)}
             disabled={isLoading}
           >
             <SelectTrigger>
               <SelectValue placeholder="Assign to someone" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Unassigned</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
               {users.map(user => (
                 <SelectItem key={user.id} value={user.id}>
                   {user.display_name || user.email}

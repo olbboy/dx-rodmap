@@ -16,11 +16,14 @@ interface SettingsPageProps {
 export async function generateMetadata({
   params,
 }: SettingsPageProps): Promise<Metadata> {
+  params = await params;
+  const id = params.id;
+  
   const supabase = await createClient();
   const { data: roadmap } = await supabase
     .from("roadmaps")
     .select("title")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   return {
@@ -30,6 +33,9 @@ export async function generateMetadata({
 }
 
 export default async function SettingsPage({ params }: SettingsPageProps) {
+  params = await params;
+  const id = params.id;
+  
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -40,7 +46,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   const { data: roadmap, error: roadmapError } = await supabase
     .from("roadmaps")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("owner_id", user.id)
     .single();
 
@@ -52,14 +58,14 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   const { data: statuses = [] } = await supabase
     .from("statuses")
     .select("*")
-    .eq("roadmap_id", params.id)
+    .eq("roadmap_id", id)
     .order("order", { ascending: true });
 
   // Fetch tags
   const { data: tags = [] } = await supabase
     .from("tags")
     .select("*")
-    .eq("roadmap_id", params.id)
+    .eq("roadmap_id", id)
     .order("name", { ascending: true });
 
   return (
@@ -73,7 +79,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
         <div className="rounded-lg border bg-card p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Statuses</h2>
-            <StatusFormDialog roadmapId={params.id}>
+            <StatusFormDialog roadmapId={id}>
               <Button variant="outline" size="sm" className="gap-1">
                 <PlusIcon className="h-4 w-4" />
                 Add Status
@@ -97,7 +103,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
                       <span>{status.name}</span>
                     </div>
                     <StatusFormDialog
-                      roadmapId={params.id}
+                      roadmapId={id}
                       status={status}
                     >
                       <Button variant="ghost" size="sm">
@@ -118,7 +124,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
         <div className="rounded-lg border bg-card p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Tags</h2>
-            <TagFormDialog roadmapId={params.id}>
+            <TagFormDialog roadmapId={id}>
               <Button variant="outline" size="sm" className="gap-1">
                 <PlusIcon className="h-4 w-4" />
                 Add Tag
@@ -142,7 +148,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
                       <span>{tag.name}</span>
                     </div>
                     <TagFormDialog
-                      roadmapId={params.id}
+                      roadmapId={id}
                       tag={tag}
                     >
                       <Button variant="ghost" size="sm">

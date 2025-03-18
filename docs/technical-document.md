@@ -86,7 +86,7 @@ CREATE INDEX idx_users_admin ON users(is_admin);
 ```sql
 CREATE TABLE roadmaps (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL,
+  title TEXT NOT NULL,
   description TEXT,
   owner_id UUID NOT NULL REFERENCES auth.users(id),
   start_date TIMESTAMP WITH TIME ZONE,
@@ -201,10 +201,11 @@ CREATE INDEX idx_milestones_date ON milestones(date);
 
 ### 4. Views và dashboard
 ```sql
+-- Tạo bảng views mà không có ràng buộc UNIQUE có điều kiện
 CREATE TABLE views (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   roadmap_id UUID NOT NULL REFERENCES roadmaps(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
+  title TEXT NOT NULL,
   description TEXT,
   type TEXT NOT NULL CHECK (type IN ('status', 'timeline', 'month', 'quarter', 'dependency', 'gantt', 'calendar', 'analytics', 'burndown', 'custom')),
   config JSONB DEFAULT '{}'::JSONB,
@@ -212,11 +213,20 @@ CREATE TABLE views (
   is_personal BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_by UUID NOT NULL REFERENCES auth.users(id),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(roadmap_id, name, created_by) WHERE is_personal = TRUE,
-  UNIQUE(roadmap_id, name) WHERE is_personal = FALSE
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Tạo chỉ mục duy nhất cho các view cá nhân
+CREATE UNIQUE INDEX unique_personal_view 
+ON views (roadmap_id, title, created_by) 
+WHERE is_personal = TRUE;
+
+-- Tạo chỉ mục duy nhất cho các view không phải cá nhân
+CREATE UNIQUE INDEX unique_non_personal_view 
+ON views (roadmap_id, title) 
+WHERE is_personal = FALSE;
+
+-- Giữ nguyên các chỉ mục khác để tối ưu hóa truy vấn
 CREATE INDEX idx_views_roadmap ON views(roadmap_id);
 CREATE INDEX idx_views_type ON views(type);
 ```

@@ -6,8 +6,8 @@ import { RoadmapList } from "@/components/roadmap/roadmap-list";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Your roadmap dashboard",
+  title: "Dashboard | DX Roadmap",
+  description: "Manage your product roadmaps",
 };
 
 export default async function DashboardPage() {

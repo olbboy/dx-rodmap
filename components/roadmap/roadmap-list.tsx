@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { MoreHorizontal, Users } from "lucide-react";
+import { MoreHorizontal, Users, Kanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,6 +62,12 @@ export function RoadmapList({ roadmaps }: RoadmapListProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
                   <Link href={`/roadmaps/${roadmap.id}`}>View</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/roadmaps/${roadmap.id}/kanban`}>
+                    <Kanban className="mr-2 h-4 w-4" />
+                    Kanban Board
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href={`/roadmaps/${roadmap.id}/edit`}>Edit</Link>

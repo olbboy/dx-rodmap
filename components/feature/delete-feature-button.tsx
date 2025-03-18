@@ -16,18 +16,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 interface DeleteFeatureButtonProps {
   featureId: string;
   featureTitle: string;
-  roadmapId: string;
+  roadmapId?: string;
+  asDropdownItem?: boolean;
 }
 
 export function DeleteFeatureButton({
   featureId,
   featureTitle,
   roadmapId,
+  asDropdownItem = false,
 }: DeleteFeatureButtonProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +47,11 @@ export function DeleteFeatureButton({
       
       toast.success("Feature deleted successfully");
       setIsOpen(false);
-      router.push(`/roadmaps/${roadmapId}`);
+      
+      if (roadmapId) {
+        router.push(`/roadmaps/${roadmapId}`);
+      }
+      
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Failed to delete feature");
@@ -56,10 +63,17 @@ export function DeleteFeatureButton({
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="gap-2">
-          <Trash className="h-4 w-4" />
-          Delete Feature
-        </Button>
+        {asDropdownItem ? (
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <Trash className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : (
+          <Button variant="destructive" className="gap-2">
+            <Trash className="h-4 w-4" />
+            Delete Feature
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

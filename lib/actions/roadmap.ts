@@ -2,11 +2,36 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { Roadmap } from "@/types";
 
 interface RoadmapData {
   title: string;
   description: string;
   is_public: boolean;
+}
+
+export async function getRoadmapById(id: string): Promise<Roadmap | null> {
+  try {
+    console.log(`Getting roadmap with ID: ${id}`);
+    const supabase = await createClient();
+    
+    const { data: roadmap, error } = await supabase
+      .from("roadmaps")
+      .select("*")
+      .eq("id", id)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching roadmap:", error);
+      return null;
+    }
+    
+    console.log("Roadmap found:", roadmap);
+    return roadmap;
+  } catch (error) {
+    console.error("Error in getRoadmapById:", error);
+    return null;
+  }
 }
 
 export async function createRoadmap(data: RoadmapData) {

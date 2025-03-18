@@ -9,6 +9,31 @@ export interface StatusFormData {
   color: string;
 }
 
+export async function getStatusesByRoadmapId(roadmapId: string): Promise<Status[]> {
+  try {
+    console.log(`Getting statuses for roadmap ID: ${roadmapId}`);
+    const supabase = await createClient();
+    
+    // Fetch statuses
+    const { data: statuses, error } = await supabase
+      .from("statuses")
+      .select("*")
+      .eq("roadmap_id", roadmapId)
+      .order("order");
+    
+    if (error) {
+      console.error("Error fetching statuses:", error);
+      return [];
+    }
+    
+    console.log(`Found ${statuses?.length || 0} statuses`);
+    return statuses || [];
+  } catch (error) {
+    console.error("Error in getStatusesByRoadmapId:", error);
+    return [];
+  }
+}
+
 export async function createStatus(
   roadmapId: string,
   data: StatusFormData

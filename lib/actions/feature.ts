@@ -15,6 +15,36 @@ export interface FeatureFormData {
   tags?: string[];
 }
 
+export async function getFeaturesByRoadmapId(roadmapId: string): Promise<Feature[]> {
+  try {
+    console.log(`Getting features for roadmap ID: ${roadmapId}`);
+    const supabase = await createClient();
+    
+    // Fetch features
+    const { data: features, error } = await supabase
+      .from("features")
+      .select(`
+        *,
+        status:statuses(*),
+        assignee:profiles(*),
+        tags(*)
+      `)
+      .eq("roadmap_id", roadmapId)
+      .order("order");
+    
+    if (error) {
+      console.error("Error fetching features:", error);
+      return [];
+    }
+    
+    console.log(`Found ${features?.length || 0} features`);
+    return features || [];
+  } catch (error) {
+    console.error("Error in getFeaturesByRoadmapId:", error);
+    return [];
+  }
+}
+
 export async function createFeature(
   roadmapId: string,
   data: FeatureFormData

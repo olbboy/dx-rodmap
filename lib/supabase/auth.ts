@@ -10,6 +10,16 @@ export function createClient() {
 }
 
 /**
+ * Get the current authenticated user (server-side)
+ * This is used in server components and server actions
+ */
+export async function getCurrentUser() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
+/**
  * Sign in with email and password
  */
 export async function signIn(email: string, password: string) {

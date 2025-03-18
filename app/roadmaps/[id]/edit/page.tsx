@@ -12,11 +12,14 @@ interface EditRoadmapPageProps {
 export async function generateMetadata({
   params,
 }: EditRoadmapPageProps): Promise<Metadata> {
+  params = await params;
+  const id = params.id;
+  
   const supabase = await createClient();
   const { data: roadmap } = await supabase
     .from("roadmaps")
     .select("title")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   return {
@@ -26,6 +29,9 @@ export async function generateMetadata({
 }
 
 export default async function EditRoadmapPage({ params }: EditRoadmapPageProps) {
+  params = await params;
+  const id = params.id;
+  
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -36,7 +42,7 @@ export default async function EditRoadmapPage({ params }: EditRoadmapPageProps) 
   const { data: roadmap, error } = await supabase
     .from("roadmaps")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("owner_id", user.id)
     .single();
 
