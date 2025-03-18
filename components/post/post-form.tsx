@@ -29,13 +29,14 @@ import { CalendarIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Post, Status, User } from "@/types";
+import { Post, Status, User, Tag } from "@/types";
 
 interface PostFormProps {
   roadmapId: string;
   postId?: string;
   statuses: Status[];
   users: User[];
+  availableTags?: Tag[];
   initialValues?: PostFormData;
 }
 
@@ -44,6 +45,7 @@ export function PostForm({
   postId,
   statuses,
   users,
+  availableTags,
   initialValues,
 }: PostFormProps) {
   const router = useRouter();
@@ -433,14 +435,30 @@ export function PostForm({
                       </Button>
                     </CommandEmpty>
                     <CommandGroup>
-                      {["Bug", "Feature", "Enhancement", "Documentation", "UI", "Backend", "Frontend", "API"].map(tag => (
-                        <CommandItem
-                          key={tag}
-                          onSelect={() => addTag(tag)}
-                        >
-                          {tag}
-                        </CommandItem>
-                      ))}
+                      {(availableTags && availableTags.length > 0) 
+                        ? availableTags.map(tag => (
+                          <CommandItem
+                            key={tag.id}
+                            onSelect={() => addTag(tag.name)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="h-2 w-2 rounded-full"
+                                style={{ backgroundColor: tag.color || '#888' }}
+                              />
+                              {tag.name}
+                            </div>
+                          </CommandItem>
+                        ))
+                        : ["Bug", "Feature", "Enhancement", "Documentation", "UI", "Backend", "Frontend", "API"].map(tag => (
+                          <CommandItem
+                            key={tag}
+                            onSelect={() => addTag(tag)}
+                          >
+                            {tag}
+                          </CommandItem>
+                        ))
+                      }
                     </CommandGroup>
                   </CommandList>
                 </Command>

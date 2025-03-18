@@ -49,15 +49,32 @@ CREATE TABLE IF NOT EXISTS posts (
   CONSTRAINT fk_updated_by FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
+-- Create table for tags
+CREATE TABLE IF NOT EXISTS tags (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  roadmap_id UUID NOT NULL,
+  name TEXT NOT NULL,
+  color TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  created_by UUID,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  CONSTRAINT fk_roadmap FOREIGN KEY (roadmap_id) REFERENCES roadmaps(id) ON DELETE CASCADE,
+  CONSTRAINT fk_created_by FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL
+);
+
 -- Create indexes for posts for better performance
 CREATE INDEX idx_posts_roadmap ON posts(roadmap_id);
 CREATE INDEX idx_posts_status ON posts(status_id) WHERE status_id IS NOT NULL;
 CREATE INDEX idx_posts_assignee ON posts(assignee_id) WHERE assignee_id IS NOT NULL;
 CREATE INDEX idx_posts_deleted_at ON posts(deleted_at) WHERE deleted_at IS NULL;
 
+-- Create indexes for tags
+CREATE INDEX idx_tags_roadmap ON tags(roadmap_id);
+
 -- Enable row level security
 ALTER TABLE statuses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
 
 -- Add policies for statuses
 CREATE POLICY select_statuses ON statuses
@@ -137,3 +154,43 @@ CREATE POLICY delete_posts ON posts
 -- Enable realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE statuses;
 ALTER PUBLICATION supabase_realtime ADD TABLE posts; 
+
+-- Add policies for tags
+CREATE POLICY select_tags ON tags
+  FOR SELECT 
+  USING (
+    roadmap_id IN (
+      SELECT id FROM roadmaps 
+      WHERE owner_id = auth.uid() OR is_public = true
+    )
+  );
+
+CREATE POLICY insert_tags ON tags
+  FOR INSERT 
+  WITH CHECK (
+    roadmap_id IN (
+      SELECT id FROM roadmaps 
+      WHERE owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY update_tags ON tags
+  FOR UPDATE 
+  USING (
+    roadmap_id IN (
+      SELECT id FROM roadmaps 
+      WHERE owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY delete_tags ON tags
+  FOR DELETE 
+  USING (
+    roadmap_id IN (
+      SELECT id FROM roadmaps 
+      WHERE owner_id = auth.uid()
+    )
+  );
+
+-- Enable realtime for tags
+ALTER PUBLICATION supabase_realtime ADD TABLE tags; 

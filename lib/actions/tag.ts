@@ -9,6 +9,28 @@ export interface TagFormData {
   color: string;
 }
 
+export async function getTagsByRoadmapId(roadmapId: string): Promise<{ data: Tag[] | null; error: Error | null }> {
+  try {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from("tags")
+      .select("*")
+      .eq("roadmap_id", roadmapId)
+      .order("name");
+    
+    if (error) {
+      console.error("Error fetching tags:", error);
+      return { data: null, error: new Error(error.message) };
+    }
+    
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error in getTagsByRoadmapId:", error);
+    return { data: null, error };
+  }
+}
+
 export async function createTag(
   roadmapId: string,
   data: TagFormData

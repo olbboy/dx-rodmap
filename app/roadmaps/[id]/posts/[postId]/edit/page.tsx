@@ -2,8 +2,9 @@ import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getRoadmapById } from "@/lib/actions/roadmap";
 import { getPostById } from "@/lib/actions/post";
-import { getStatuses } from "@/lib/actions/status";
+import { getStatuses, getStatusesByRoadmapId } from "@/lib/actions/status";
 import { getAllUsers } from "@/lib/actions/user";
+import { getTagsByRoadmapId } from "@/lib/actions/tag";
 import { PostForm } from "@/components/post/post-form";
 
 export const metadata = {
@@ -36,8 +37,13 @@ export default async function EditPostPage(props: {
     redirect(`/roadmaps/${id}`);
   }
   
-  // Get post
-  const post = await getPostById(postId);
+  // Fetch post and supporting data in parallel
+  const [post, statuses, users, tagsResult] = await Promise.all([
+    getPostById(postId),
+    getStatusesByRoadmapId(id),
+    getAllUsers(),
+    getTagsByRoadmapId(id)
+  ]);
   
   if (!post) {
     notFound();
@@ -48,20 +54,20 @@ export default async function EditPostPage(props: {
     redirect(`/roadmaps/${id}`);
   }
   
-  // Get statuses
-  const statuses = await getStatuses(id);
-  
-  // Get users
-  const users = await getAllUsers();
-  
   return (
     <div className="container py-6">
-      <h1 className="text-3xl font-bold mb-6">Edit Post</h1>
-      <PostForm 
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">Edit Post</h1>
+        <p className="text-muted-foreground">
+          Update post in {roadmap.title}
+        </p>
+      </div>
+      <PostForm
         roadmapId={id}
         postId={postId}
-        statuses={statuses}
-        users={users}
+        statuses={statuses || []}
+        users={users || []}
+        availableTags={tagsResult?.data || []}
         initialValues={{
           title: post.title,
           description: post.description || "",

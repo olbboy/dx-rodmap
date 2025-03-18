@@ -65,6 +65,16 @@ export interface Post {
   updater?: User;
 }
 
+export interface Tag {
+  id: string;
+  roadmap_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+}
+
 export interface RoadmapMember {
   id: string;
   roadmap_id: string;
