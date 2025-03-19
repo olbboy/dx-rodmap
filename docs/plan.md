@@ -221,14 +221,12 @@ The application will be built using:
 **Objectives:**
 - Implement dependency management
 - Create activity logging
-- Develop notification system
 - Build dashboard analytics
 
 **Tasks:**
 1. Implement dependency creation/management
 2. Create dependency impact analysis
 3. Develop activity logging system
-4. Build notification management
 5. Create user mentions in comments
 6. Implement dashboard analytics
 7. Build custom views management
@@ -236,7 +234,6 @@ The application will be built using:
 **Deliverables:**
 - Dependency management
 - Activity logging
-- Notification system
 - User mentions
 - Analytics dashboard
 - Custom views

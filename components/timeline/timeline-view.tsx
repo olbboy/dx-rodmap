@@ -15,6 +15,13 @@ import {
   DropdownMenuCheckboxItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { DependencyCreator } from "@/components/dependency/dependency-creator";
+import { useTimelineViewport } from "@/lib/hooks/use-timeline-viewport";
+import { TimelineFilter } from "./timeline-filter";
+import { TimelineGroup } from "./timeline-group";
+import { TimelineExport } from "./timeline-export";
+import { TimelineLegend } from "./timeline-legend";
+import { GroupBy } from "./timeline-group";
 
 // Define TimeScale type ahead of the imports
 type TimeScale = "day" | "week" | "month" | "quarter" | "year";
@@ -562,7 +569,135 @@ export function TimelineView({
       timelineRef.current.scrollLeft = scrollPosition;
     }
   };
+
+  // Add viewport optimization
+  const { viewport, isItemInViewport } = useTimelineViewport(timelineRef as React.RefObject<HTMLDivElement>, {
+    buffer: 100, // 100% buffer for smoother scrolling
+    throttleTime: 16 // ~60fps
+  });
+
+  // Add new state for filtering and grouping
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const [filteredMilestones, setFilteredMilestones] = useState<Milestone[]>([]);
+  const [groupBy, setGroupBy] = useState<GroupBy>("none");
+  const [filterState, setFilterState] = useState({
+    startDate: undefined,
+    endDate: undefined,
+    statusIds: [],
+    assigneeIds: [],
+    priorities: [],
+    tags: [],
+    searchTerm: ""
+  });
   
+  // Initialize filtered items with all items
+  useEffect(() => {
+    setFilteredPosts(posts);
+    setFilteredMilestones(milestones);
+  }, [posts, milestones]);
+  
+  // Handle filter changes
+  const handleFilterChange = (newFilters: any) => {
+    // Apply filters to posts
+    const newFilteredPosts = posts.filter(post => {
+      // Filter by date range
+      if (newFilters.startDate && post.end_date) {
+        const endDate = new Date(post.end_date);
+        if (endDate < newFilters.startDate) return false;
+      }
+      
+      if (newFilters.endDate && post.start_date) {
+        const startDate = new Date(post.start_date);
+        if (startDate > newFilters.endDate) return false;
+      }
+      
+      // Filter by status
+      if (newFilters.statusIds.length > 0 && post.status_id) {
+        if (!newFilters.statusIds.includes(post.status_id)) return false;
+      }
+      
+      // Filter by assignee
+      if (newFilters.assigneeIds.length > 0 && post.assignee_id) {
+        if (!newFilters.assigneeIds.includes(post.assignee_id)) return false;
+      }
+      
+      // Filter by priority
+      if (newFilters.priorities.length > 0 && post.priority) {
+        if (!newFilters.priorities.includes(post.priority)) return false;
+      }
+      
+      // Filter by tags
+      if (newFilters.tags.length > 0 && post.tags && post.tags.length > 0) {
+        if (!post.tags.some(tag => newFilters.tags.includes(tag))) return false;
+      }
+      
+      // Filter by search term
+      if (newFilters.searchTerm) {
+        const term = newFilters.searchTerm.toLowerCase();
+        const titleMatch = post.title?.toLowerCase().includes(term);
+        const descMatch = post.description?.toLowerCase().includes(term);
+        if (!titleMatch && !descMatch) return false;
+      }
+      
+      return true;
+    });
+    
+    // Apply filters to milestones
+    const newFilteredMilestones = milestones.filter(milestone => {
+      // Filter by date range
+      if (newFilters.startDate && milestone.date) {
+        const milestoneDate = new Date(milestone.date);
+        if (milestoneDate < newFilters.startDate) return false;
+      }
+      
+      if (newFilters.endDate && milestone.date) {
+        const milestoneDate = new Date(milestone.date);
+        if (milestoneDate > newFilters.endDate) return false;
+      }
+      
+      // Filter by search term
+      if (newFilters.searchTerm) {
+        const term = newFilters.searchTerm.toLowerCase();
+        const titleMatch = milestone.title?.toLowerCase().includes(term);
+        const descMatch = milestone.description?.toLowerCase().includes(term);
+        if (!titleMatch && !descMatch) return false;
+      }
+      
+      return true;
+    });
+    
+    setFilteredPosts(newFilteredPosts);
+    setFilteredMilestones(newFilteredMilestones);
+    setFilterState(newFilters);
+  };
+  
+  // Handle group change
+  const handleGroupChange = (newGroupBy: GroupBy) => {
+    setGroupBy(newGroupBy);
+  };
+  
+  // Mock data for status and users
+  // In a real implementation, these would be fetched from the API
+  const mockStatuses = [
+    { id: "todo", name: "To Do", color: "#3b82f6" },
+    { id: "in-progress", name: "In Progress", color: "#f97316" },
+    { id: "done", name: "Done", color: "#22c55e" }
+  ];
+  
+  const mockUsers = [
+    { id: "user-1", email: "user1@example.com" },
+    { id: "user-2", email: "user2@example.com" }
+  ];
+  
+  // Get available tags from posts
+  const availableTags = Array.from(
+    new Set(
+      posts
+        .filter(post => post.tags && post.tags.length > 0)
+        .flatMap(post => post.tags || [])
+    )
+  );
+
   return (
     <div className="flex flex-col h-full border rounded-md bg-background">
       {/* Debug information */}
@@ -578,6 +713,32 @@ export function TimelineView({
             <div>Items Ready: {itemsReady ? 'Yes' : 'No'}</div>
           </div>
         </details>
+      </div>
+      
+      {/* Top bar with filter and export controls */}
+      <div className="border-b bg-background p-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <TimelineFilter
+            posts={posts}
+            users={mockUsers}
+            availableStatuses={mockStatuses}
+            availableTags={availableTags}
+            filters={filterState}
+            onFilterChange={handleFilterChange}
+          />
+          
+          <div className="flex items-center gap-2">
+            <TimelineLegend />
+            
+            <TimelineExport
+              timelineRef={timelineRef}
+              posts={filteredPosts}
+              milestones={filteredMilestones}
+              dependencies={dependencies}
+              roadmapName={`Roadmap ${roadmapId}`}
+            />
+          </div>
+        </div>
       </div>
       
       {/* Controls */}
@@ -598,6 +759,12 @@ export function TimelineView({
         onTogglePosts={togglePosts}
         onToggleMilestones={toggleMilestones}
         onToggleDependencies={toggleDependencies}
+        // Add grouping control
+        groupBy={groupBy}
+        onGroupByChange={handleGroupChange}
+        // Use filtered items count
+        postsCount={filteredPosts.length}
+        milestonesCount={filteredMilestones.length}
       />
       
       <div className="border-b bg-background p-3 flex justify-between items-center">
@@ -689,51 +856,72 @@ export function TimelineView({
             headerHeight={headerHeight}
           />
           
-          {/* Render posts - only when ready */}
-          <div className="relative">
-            {itemsReady && showPosts && posts.map((post, index) => {
-              try {
-                console.log(`Rendering post: ${post.title}, position:`, itemPositions[post.id]);
-                const position = itemPositions[post.id];
-                if (!position) {
-                  console.warn(`No position calculated for post: ${post.title} with id ${post.id}`);
-                  return null;
-                }
-                
-                return (
-                  <TimelineItem
-                    key={post.id}
-                    post={post}
-                    startDate={startDate}
-                    endDate={endDate}
-                    cellWidth={cellWidth}
-                    rowHeight={rowHeight}
-                    left={position.left}
-                    top={position.top}
-                    width={position.width}
-                    onEdit={isOwner ? handlePostEdit : undefined}
-                    onDelete={isOwner ? handlePostDelete : undefined}
-                    onCreateDependency={isOwner ? handleCreateDependency : undefined}
-                  />
-                );
-              } catch (error) {
-                console.error(`Error rendering post: ${post?.title || 'unknown'}`, error);
-                return null;
-              }
-            })}
-          </div>
+          {/* Render using the TimelineGroup component */}
+          {itemsReady && showPosts && (
+            <TimelineGroup
+              posts={filteredPosts}
+              groupBy={groupBy}
+              statuses={mockStatuses}
+              users={mockUsers}
+              onGroupChange={handleGroupChange}
+              className="relative"
+            >
+              {(groupPosts) => (
+                <div className="relative">
+                  {groupPosts.map((post, index) => {
+                    try {
+                      const position = itemPositions[post.id];
+                      if (!position) {
+                        console.warn(`No position calculated for post: ${post.title} with id ${post.id}`);
+                        return null;
+                      }
+
+                      // Only render if in viewport
+                      if (!isItemInViewport(position.left, position.width)) {
+                        return null;
+                      }
+
+                      return (
+                        <TimelineItem
+                          key={post.id}
+                          post={post}
+                          startDate={startDate}
+                          endDate={endDate}
+                          cellWidth={cellWidth}
+                          rowHeight={rowHeight}
+                          left={position.left}
+                          top={position.top}
+                          width={position.width}
+                          onEdit={isOwner ? handlePostEdit : undefined}
+                          onDelete={isOwner ? handlePostDelete : undefined}
+                          onCreateDependency={isOwner ? handleCreateDependency : undefined}
+                        />
+                      );
+                    } catch (error) {
+                      console.error(`Error rendering post: ${post?.title || 'unknown'}`, error);
+                      return null;
+                    }
+                  })}
+                </div>
+              )}
+            </TimelineGroup>
+          )}
           
-          {/* Render milestones - only when ready */}
+          {/* Render milestones - only when ready and in viewport */}
           <div className="relative">
-            {itemsReady && showMilestones && milestones.map((milestone) => {
+            {itemsReady && showMilestones && filteredMilestones.map((milestone) => {
               try {
-                console.log(`Rendering milestone: ${milestone.title}, position:`, itemPositions[milestone.id]);
                 const position = itemPositions[milestone.id];
                 if (!position) {
                   console.warn(`No position calculated for milestone: ${milestone.title} with id ${milestone.id}`);
                   return null;
                 }
-                
+
+                // Only render if in viewport
+                if (!isItemInViewport(position.left, 0)) {
+                  return null;
+                }
+
                 return (
                   <TimelineMilestone
                     key={milestone.id}
@@ -741,12 +929,10 @@ export function TimelineView({
                     left={position.left}
                     height={position.height}
                     onEdit={isOwner ? (m: Milestone) => {
-                      console.log('Edit milestone clicked:', m);
                       setSelectedMilestone(m);
                       setShowMilestoneForm(true);
                     } : undefined}
                     onDelete={isOwner ? (m: Milestone) => {
-                      // Delete milestone logic
                       if (confirm(`Are you sure you want to delete "${m.title}"?`)) {
                         // Call delete API
                       }
@@ -760,20 +946,25 @@ export function TimelineView({
             })}
           </div>
           
-          {/* Render dependencies - only when ready */}
+          {/* Render dependencies - only when ready and in viewport */}
           <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
             {itemsReady && showDependencies && dependencies.map(dependency => {
               const sourcePosition = itemPositions[dependency.sourceId];
               const targetPosition = itemPositions[dependency.targetId];
-              
+
               if (!sourcePosition || !targetPosition) return null;
-              
-              // Find the source and target posts
+
+              // Only render if either source or target is in viewport
+              if (!isItemInViewport(sourcePosition.left, sourcePosition.width) &&
+                  !isItemInViewport(targetPosition.left, targetPosition.width)) {
+                return null;
+              }
+
               const sourcePost = posts.find(p => p.id === dependency.sourceId);
               const targetPost = posts.find(p => p.id === dependency.targetId);
-              
+
               if (!sourcePost || !targetPost) return null;
-              
+
               return (
                 <TimelineDependency
                   key={dependency.id}
@@ -804,10 +995,25 @@ export function TimelineView({
       )}
       
       {/* Add dependency creator dialog */}
-      {showDependencyCreator && (
-        <div>
-          {/* Will implement the DependencyCreator component next */}
-        </div>
+      {showDependencyCreator && sourceDependencyId && (
+        <DependencyCreator
+          roadmapId={roadmapId}
+          sourceId={sourceDependencyId}
+          open={showDependencyCreator}
+          onOpenChange={(open: boolean) => {
+            setShowDependencyCreator(open);
+            if (!open) setSourceDependencyId(null);
+          }}
+          posts={posts}
+          onDependencyCreated={(dependency: Dependency) => {
+            // Add the new dependency to the state
+            setDependencies(prev => [...prev, dependency]);
+            
+            // Close the dialog
+            setShowDependencyCreator(false);
+            setSourceDependencyId(null);
+          }}
+        />
       )}
     </div>
   );

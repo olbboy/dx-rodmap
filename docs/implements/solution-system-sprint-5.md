@@ -48,20 +48,21 @@ Two new tables will be added to the database schema:
 - ✅ TimelineMilestone component for milestone visualization
 - ✅ TimelineDependency component for dependency visualization
 - ✅ Integration of all components in TimelineView
+- ✅ DependencyCreator for creating dependencies between posts
+- ✅ DeleteDependencyButton for removing dependencies
+- ✅ DependencyList component for listing dependencies
+- ✅ API integration for timeline updates
 
-### In Progress Components and Features
+### All Sprint 5 Features Completed
 
-- 🔄 Remaining functionality:
-  - ❌ DependencyCreator for creating dependencies (not started)
-  - ❌ API integration for real-time updates
+✅ All sprint 5 components and features have been successfully implemented.
 
-### Next Steps
+### Next Steps for Sprint 6
 
-1. Implement the DependencyCreator UI component
-2. Integrate API calls for data mutations
-3. Add tests for the timeline view
-4. Fix any remaining linter errors
-5. Optimize performance for large datasets
+1. Enhance timeline with additional features (filtering, grouping)
+2. Improve performance optimizations for large datasets
+3. Add comprehensive testing
+4. Create documentation and user guides
 
 ## Supabase Implementation
 
